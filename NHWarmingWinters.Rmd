@@ -1,0 +1,101 @@
+---
+title: "NH Fast Warming Winters"
+author: "Kate Belisle"
+date: "2/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
+require(ggplot2)
+require(ggimage)
+require(ggthemes)
+require(Hmisc)
+```
+
+#### New Hampshire Winters Are Among The Fastest-Warming In The Country
+
+This was the startling headling in an [NHPR](https://www.nhpr.org) [article](https://www.nhpr.org/post/new-hampshire-winters-are-among-fastest-warming-country) published in December 2019. The accompanying chart showed a linear trend of an alarming 5.6 degree Fahrenheit increase in average winter (Dec-Feb) temperature from 1970 to 2019 in [Concord](https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:USW00014745/detail)
+
+![The Chart](https://www.nhpr.org/sites/nhpr/files/styles/medium/public/201911/2019wintertrends_graph_concordnh_en_title_lg__1_.jpg)  
+
+### The Challenge  
+
+The winter from both December 2017 and 2018 both had sequential AO lows with incredibly weak polar vortex that repeatedly allowed arctic air to dip into New Hampshire. The northern area of our state dropped well under twenty below overnight, [colder than Mars](https://www.cnn.com/2018/01/03/us/cold-weather-arctic-outbreak/index.html) and often barely broke into single digits during the day. And in February 2017 even [NHPR reported on the cold](https://www.nhpr.org/post/polar-vortex-back#stream/0) How could there be such a high trend? Perhaps the seventies did have much colder winters? So I decided to look at the data myself.  
+
+### The Data Source
+After some searching, including going to [Climate Central's website](https://www.climatecentral.org) I managed to match the data in the original graph from [NOAA Climate at a Glance](https://www.ncdc.noaa.gov/cag) on their [Concord page](https://www.ncdc.noaa.gov/cag/city/time-series/USW00014745/tavg/3/2/1970-2019?base_prd=true&begbaseyear=1901&endbaseyear=2000)
+
+From there, I [downloaded the data](https://www.ncdc.noaa.gov/cag/city/time-series/USW00014745-tavg-3-2-1970-2019.csv?base_prd=true&begbaseyear=1940&endbaseyear=2000) and processed it to a tibble.
+
+```{r concord-winter-averages}
+concord<-readRDS("concord.rds")
+describe(concord$Value)
+
+```
+
+### Analysis  
+
+The data seemed very well behaved, although five averages seemed to be missing, for years 1973-1975 and 1979-1980. More on that later.  
+
+Similarly plotted with regression and line connectors:
+
+```{r concord-chart}
+ggplot(concord, aes(Year, Value)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = "lm", se=FALSE) + 
+  scale_y_continuous("Average Temperature °F", c(15,20,25,30,35)) +
+  theme_economist_white() 
+
+```
+
+This data has a 2002 at 30.7°F where the published chart shows that point under 30°, and the five missing years are troublesome. Time to perform a full linear regression.
+
+```{r Temp-Year-OLS}
+fit <- lm(Value~Year, concord)
+s<-summary(fit)
+print(s)
+zeroY=round(s$coefficients[1])
+annualTrend=s$coefficients[2]
+predictOne=fit$fitted.values[1]
+predictLast=fit$fitted.values[length(fit$fitted.values)]
+```
+
+the "zero" year value is `r zeroY` with the annual trend  `r annualTrend` and a final change of `r predictLast-predictOne` ... much lower than the published predicted increase.  
+
+The only way to be sure is to pull the daily station values from the NOAA API
+
+```{r daily-values}
+fullconcord=readRDS("fullconcord.rds")
+concord_summary=readRDS("concord_summary.rds")
+```
+```{r updated-stats}
+decades<-concord_summary %>% 
+  filter(wyear>=1970) %>% 
+  filter(wyear<2019) #%>%
+#  mutate(favg=(fmax+fmin)/2)
+ggplot(decades, aes(wyear, avgtemp)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = "lm", se=FALSE) + 
+  scale_y_continuous("Average Temperature °F", c(15,20,25,30,35)) +
+  theme_economist_white() 
+
+fit <- lm(avgtemp~wyear,decades )
+s<-summary(fit)
+print(s)
+zeroY=round(s$coefficients[1])
+annualTrend=s$coefficients[2]
+predictOne=fit$fitted.values[1]
+predictLast=fit$fitted.values[length(fit$fitted.values)]
+
+```
+the "zero" year value is `r zeroY` with the annual trend  `r annualTrend` and a final change of `r predictLast-predictOne` ... much lower than the published predicted increase.  
+
+
+
+Which approximates the published chart:
+
+![NHPR Climate Central Concord NH Chart](images/2019wintertrends_graph_concordnh_en_title_lg__1_.jpg)
