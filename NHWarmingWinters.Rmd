@@ -12,6 +12,7 @@ require(ggplot2)
 require(ggimage)
 require(ggthemes)
 require(Hmisc)
+require(pipeR)
 ```
 
 #### New Hampshire Winters Are Among The Fastest-Warming In The Country
@@ -41,29 +42,41 @@ The data seemed very well behaved, although five averages seemed to be missing, 
 
 Similarly plotted with regression and line connectors:
 
+
+```{r Temp-Year-OLS}
+winterFit<-function(df,y,x){
+ fitvals<-df %>%
+   select(ly=!!enquo(y),lx=!!enquo(x)) %>%
+   lm(ly ~lx , data=.) %>%
+   fitted.values() 
+ fitstats <-  df %>%
+    select(ly=!!enquo(y),lx=!!enquo(x)) %>%
+    lm(ly ~lx , data=.) %>%
+   summary() %>>%
+   (r.squared)
+ return(list(fitvals,fitstats))
+}
+f<-winterFit(concord,Value,Year)
+
+```
+
 ```{r concord-chart}
-ggplot(concord, aes(Year, Value)) +
+winterPlot<-function(df,y,x){
+ggplot({{df}}, aes({{x}}, {{y}})) +
   geom_point() +
   geom_line() +
   geom_smooth(method = "lm", se=FALSE) + 
   scale_y_continuous("Average Temperature °F", c(15,20,25,30,35)) +
   theme_economist_white() 
 
+  }
+winterPlot(concord,Value,Year)
 ```
 
 This data has a 2002 at 30.7°F where the published chart shows that point under 30°, and the five missing years are troublesome. Time to perform a full linear regression.
 
-```{r Temp-Year-OLS}
-fit <- lm(Value~Year, concord)
-s<-summary(fit)
-print(s)
-zeroY=round(s$coefficients[1])
-annualTrend=s$coefficients[2]
-predictOne=fit$fitted.values[1]
-predictLast=fit$fitted.values[length(fit$fitted.values)]
-```
 
-the "zero" year value is `r zeroY` with the annual trend  `r annualTrend` and a final change of `r predictLast-predictOne` ... much lower than the published predicted increase.  
+The annual OLS trend is  `r annualTrend` and a final change of `r predictLast-predictOne` ... much lower than the published predicted increase.  
 
 The only way to be sure is to pull the daily station values from the NOAA API
 
@@ -75,21 +88,15 @@ concord_summary=readRDS("concord_summary.rds")
 decades<-concord_summary %>% 
   filter(wyear>=1970) %>% 
   filter(wyear<2019) #%>%
-#  mutate(favg=(fmax+fmin)/2)
-ggplot(decades, aes(wyear, avgtemp)) +
-  geom_point() +
-  geom_line() +
-  geom_smooth(method = "lm", se=FALSE) + 
-  scale_y_continuous("Average Temperature °F", c(15,20,25,30,35)) +
-  theme_economist_white() 
-
-fit <- lm(avgtemp~wyear,decades )
-s<-summary(fit)
-print(s)
-zeroY=round(s$coefficients[1])
-annualTrend=s$coefficients[2]
-predictOne=fit$fitted.values[1]
-predictLast=fit$fitted.values[length(fit$fitted.values)]
+winterPlot(decades,avgtemp,wyear)
+decades<-concord_summary %>% 
+  filter(wyear>=1950) %>% 
+  filter(wyear<2019) #%>%
+winterPlot(decades,avgtemp,wyear)
+decades<-concord_summary %>% 
+  filter(wyear>=1940) %>% 
+  filter(wyear<2019) #%>%
+winterPlot(decades,avgtemp,wyear)
 
 ```
 the "zero" year value is `r zeroY` with the annual trend  `r annualTrend` and a final change of `r predictLast-predictOne` ... much lower than the published predicted increase.  
