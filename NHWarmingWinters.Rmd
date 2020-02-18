@@ -57,7 +57,12 @@ winterFit<-function(df,y,x){
  return(list(fitvals,fitstats))
 }
 f<-winterFit(concord,Value,Year)
-
+fittedvals=f[1][[1]]
+rsquared=f[2][[1]]
+predictOne=fittedvals[1]
+PredictTwo=fittedvals[2]
+predictLast=fittedvals[length(fittedvals)]
+annualTrend=PredictTwo-predictOne
 ```
 
 ```{r concord-chart}
@@ -87,8 +92,18 @@ concord_summary=readRDS("concord_summary.rds")
 ```{r updated-stats}
 decades<-concord_summary %>% 
   filter(wyear>=1970) %>% 
-  filter(wyear<2019) #%>%
-winterPlot(decades,avgtemp,wyear)
+  filter(wyear<2019) %>%
+  winterPlot(avgtemp,wyear)
+
+```
+
+
+
+
+Which approximates the published chart:
+
+![NHPR Climate Central Concord NH Chart](images/2019wintertrends_graph_concordnh_en_title_lg__1_.jpg)
+```{r alternate-plots}
 decades<-concord_summary %>% 
   filter(wyear>=1950) %>% 
   filter(wyear<2019) #%>%
@@ -97,12 +112,9 @@ decades<-concord_summary %>%
   filter(wyear>=1940) %>% 
   filter(wyear<2019) #%>%
 winterPlot(decades,avgtemp,wyear)
+decades<-concord_summary %>% 
+  filter(wyear>=2000) %>% 
+  filter(wyear<2019) #%>%
+winterPlot(decades,avgtemp,wyear)
 
 ```
-the "zero" year value is `r zeroY` with the annual trend  `r annualTrend` and a final change of `r predictLast-predictOne` ... much lower than the published predicted increase.  
-
-
-
-Which approximates the published chart:
-
-![NHPR Climate Central Concord NH Chart](images/2019wintertrends_graph_concordnh_en_title_lg__1_.jpg)
