@@ -1,0 +1,70 @@
+function commentAjax(commentContainerId, entryId, formReturnURL) {
+	$(commentContainerId).empty();
+	var errorMessage = '<div class="error">Commenting is unavailable at this time.</div>';
+	$.ajax({
+		url: "/main/_comments-ajax/" + entryId,
+		cache: true,
+		statusCode: {
+			500: function (response) {$(commentContainerId).append(errorMessage);},
+			400: function (response) {$(commentContainerId).append(errorMessage);},
+			404: function (response) {$(commentContainerId).append(errorMessage);}
+		}, success: function (html) {$(commentContainerId).append(html).find('input[name="RET"]').val(formReturnURL);}
+	});
+}
+
+$('#nav-7614 a').first().append('&nbsp;&nbsp;&raquo;');
+  $('#nav-7614 a').first().click(function(e) {
+  e.preventDefault();
+  return false;
+});
+
+(function($){
+	
+	$('a[href*="http"]').each(function () {
+
+        var isInternalLink = new RegExp('/[a-zA-Z0-9]+.climatecentral.org/');
+
+        if ( ! isInternalLink.test(this.href) ) {
+
+            $(this).attr('target', '_blank');
+
+        }
+
+    });
+	
+	$('iframe').each(function () {
+
+        var $this = $(this), $src = $this.prop('src'), $parent = $this.parent(), $parent_type = $parent[0].tagName;
+		
+		if ( $src.indexOf('https') < 0 ){
+			var $new_src = $src.replace('http://', 'https://');
+			$this.prop('src', $new_src);
+		}
+		
+		if ( $src.indexOf('outreach') == -1 && $src.indexOf('graphics-generator') == -1 && $src.indexOf('wgts') == -1){
+			return true;
+		}
+		
+		var $class = 'embed-responsive embed-responsive-16by9';
+		
+		if ($src.indexOf('wgts') > -1){
+			$class = 'embed-responsive embed-responsive-72x64';
+			if ($src.indexOf('SLR2015ComparisonSliders/SLR-ATT-Comparison') > -1){
+				$class = $class + ' tall';
+			}
+			if ($src.indexOf('2015-lamm-sliders/pentagon') > -1){
+				$class = $class + ' med-tall';
+			}
+			if ($src.indexOf('2015-lamm-sliders/durban') > -1){
+				$class = $class + ' med-tall';
+			}
+		}		 
+		
+		if ($parent_type === 'DIV'){$parent.addClass($class);}
+		else{
+			$this.wrap( "<div class='"+$class+"'></div>" );
+		}
+		
+    });
+	
+})(jQuery);

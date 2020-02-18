@@ -1,0 +1,78 @@
+$(document).ready(function () {
+
+	// utility nav search toggle
+	var submitIcon = $('#search-submit');
+	var searchBox = $('#search-box');
+	var inputBox = $('#search-box .search-field');
+	var isOpen = false;
+	submitIcon.click(function(e){
+	e.preventDefault();
+	if(isOpen == false){
+		searchBox.addClass('searchbox-open');
+		$(this).addClass('searchbox-open');
+		inputBox.focus();
+		isOpen = true;
+		} else {
+		var inputVal = inputBox.val();
+		    inputVal = $.trim(inputVal).length;
+		    if( inputVal !== 0){
+		        $("#site-search-form").submit();
+		    } else {
+		        searchBox.removeClass('searchbox-open');
+		  $(this).removeClass('searchbox-open');
+		  inputBox.focusout();
+		  isOpen = false;
+		    }
+		}
+	});
+
+	// header collapse
+	$(".collapse-icon").on('click', function(){
+		var iconText = $(this).find('.icon-label').text();
+		if (iconText == 'Collapse'){
+			$(this).find('.icon-label').text("Expand");
+			$(this).find('.icon-symbol').addClass('fa-plus').removeClass('fa-times');
+		} else {
+			$(this).find('.icon-label').text("Collapse");
+			$(this).find('.icon-symbol').addClass('fa-times').removeClass('fa-plus');
+		}
+		console.log(iconText);
+	});
+
+	// header about panel toggle
+	if (($.cookie('show_head') == null && $("body").hasClass("collapsed")) || $.cookie('show_head') == 'no')
+	{
+		$('.home-about, .close-head, .collapse-head-x').hide();
+		setTimeout( function(){ $('.open-head, .collapse-head-plus').show(); console.log('cookie is a no'); }, 500);
+		
+	}
+
+	$('.collapse-head').click(function(e) {
+		e.preventDefault();
+
+		if ($('.home-about').is(':visible'))
+		{
+			$('.home-about').slideUp('slow');
+			$('.close-head, .collapse-head-x').hide();
+			$('.open-head, .collapse-head-plus').show();
+			$.cookie('show_head', 'no', {path: '/'});
+		}
+		else
+		{
+			$('.home-about').slideDown('slow');
+			$('.close-head, .collapse-head-x').show();
+			$('.open-head, .collapse-head-plus').hide();
+			$.cookie('show_head', 'yes', {path: '/'});
+		}
+
+		console.log('collapse-head clicked');
+
+	});
+
+	$("#secondarynav-mobile-toggle").on('click', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('open');
+        $("#secondarynav-mobile-menu").slideToggle('fast').toggleClass('open');
+    });
+	
+});
