@@ -13,6 +13,7 @@ require(ggimage)
 require(ggthemes)
 require(Hmisc)
 require(pipeR)
+require(tidyquant)
 ```
 
 #### New Hampshire Winters Are Among The Fastest-Warming In The Country
@@ -70,7 +71,7 @@ winterPlot<-function(df,y,x){
 ggplot({{df}}, aes({{x}}, {{y}})) +
   geom_point() +
   geom_line() +
-  geom_smooth(method = "lm", se=FALSE) + 
+  geom_smooth(method = "lm", se=TRUE) + 
   scale_y_continuous("Average Temperature °F", c(15,20,25,30,35)) +
   theme_economist_white() 
 
@@ -98,6 +99,25 @@ decades<-concord_summary %>%
 ```
 
 
+
+```{r concord-box}
+winterbox<-function(df){
+ggplot(df, aes(x = wyear, y = avgtemp)) +
+#  geom_candlestick(aes(open = maxmin, high = maxmax, low = minmin, close = maxmin)) +
+  geom_ma(color = "black",n=3) +
+#  coord_x_date(xlim = c(today() - weeks(6), today()),
+#               ylim = c(10, 40))
+  geom_segment(aes(x=wyear,xend=wyear,y=mintemp,yend=maxtemp),color="blue")  +
+  geom_point(aes(y=maxmax),color="red") +
+  geom_point(aes(y=minmin),color="violet") +
+  geom_point(aes(y=maxmin),color="blue") +
+  geom_point(aes(y=minmax),color="orange") +
+  scale_y_continuous("Temperature °F", seq(-40,90,10)) +
+  theme_economist_white() 
+
+  }
+winterbox(concord_summary)
+```
 
 
 Which approximates the published chart:

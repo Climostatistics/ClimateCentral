@@ -6,8 +6,8 @@ require(lubridate)
 # ncdc_stations(datasetid='GHCND',  stationid='GHCND:USW00014745')
 # ncdc_datasets()
 # dt<-ncdc_datatypes()$data
-#with_units <- ncdc(datasetid='GHCND', stationid='GHCND:USW00014745', datatypeid='TMIN', startdate = '1973-12-01', enddate = '1974-03-31', limit=500, add_units = TRUE)
-#with_units[2]$data$units
+# with_units <- ncdc(datasetid='GHCND', stationid='GHCND:USW00014745', datatypeid='TMIN', startdate = '1973-12-01', enddate = '1974-03-31', limit=500, add_units = TRUE)
+# with_units[2]$data$units
 
 endpoint="www.ncei.noaa.gov/access/services/data/v1"
 dataset="daily-summaries"
@@ -37,13 +37,13 @@ concord<-t %>%
          favg=(fmax+fmin)/2,
          tdate=ymd(DATE),
          tyear=year(tdate),
-         tmonth=month(tdate))
+         wintermonth=month(tdate))
 saveRDS(concord,"fullconcordallyears.rds")
 
-concord_summary<- concord %>%
-  filter(tmonth %in% c(12,1,2)) %>%
-  mutate(wyear=ifelse(tmonth==12,wyear+1,wyear)) %>%
-  group_by(wyear) %>%
+concord_winter_months<- concord %>%
+  filter(wintermonth %in% c(12,1,2)) %>%
+  mutate(winter=ifelse(wintermonth==12,wyear+1,wyear)) %>%
+  group_by(winter,wintermonth) %>%
   summarise(mintemp=mean(fmin),
             maxtemp=mean(fmax),
             avgtemp=mean(favg),
@@ -51,5 +51,27 @@ concord_summary<- concord %>%
             rngtemp=mean(frng),
             minmax=min(fmax),
             maxmin=max(fmin),
+            maxmax=max(fmax),
+            minmin=min(fmin),
             ndays=n())
 saveRDS(concord_summary,"concord_summary.rds")
+
+concord_summary<- concord %>%
+  filter(tmonth %in% c(12,1,2)) %>%
+  mutate(winter=ifelse(tmonth==12,wyear+1,wyear)) %>%
+  group_by(winter) %>%
+  summarise(mintemp=mean(fmin),
+            maxtemp=mean(fmax),
+            avgtemp=mean(favg),
+            stdtemp=sd(favg),
+            rngtemp=mean(frng),
+            minmax=min(fmax),
+            maxmin=max(fmin),
+            maxmax=max(fmax),
+            minmin=min(fmin),
+            ndays=n())
+saveRDS(concord_summary,"concord_summary.rds")
+
+
+
+
